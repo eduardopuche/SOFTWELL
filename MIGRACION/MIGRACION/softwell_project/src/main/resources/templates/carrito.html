@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrito de Compras - Latin Jewelry Elegance</title>
+  <link rel="stylesheet" th:href="@{/styles.css}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="logo">LJE</div>
+      <nav class="main-nav">
+        <a th:href="@{/}">Inicio</a>
+        <a th:href="@{/catalogo}">Catálogo</a>
+        <a th:href="@{/carrito}" class="active cart-link">
+          <i class="fas fa-shopping-cart"></i>
+          <span class="cart-badge" th:if="${cartItemCount > 0}" th:text="${cartItemCount}">0</span>
+        </a>
+        <a th:href="@{/login}" class="btn btn-primary">Admin</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" style="padding: 40px 20px;">
+    <h1>Carrito de Compras</h1>
+
+    <div th:if="${success}" class="alert alert-success">
+      <i class="fas fa-check-circle"></i>
+      <span th:text="${success}"></span>
+    </div>
+
+    <div th:if="${items.isEmpty()}" class="empty-cart">
+      <i class="fas fa-shopping-cart"></i>
+      <h2>Tu carrito está vacío</h2>
+      <p>¡Descubre nuestras joyas exclusivas!</p>
+      <a th:href="@{/catalogo}" class="btn btn-primary">Ir al Catálogo</a>
+    </div>
+
+    <div th:if="${!items.isEmpty()}" class="cart-container">
+      <div class="cart-items">
+        <div class="cart-item" th:each="item : ${items}">
+          <div class="cart-item-image">
+            <img th:src="@{${item.product.imagen}}" th:alt="${item.product.nombre}">
+          </div>
+          
+          <div class="cart-item-details">
+            <h3 th:text="${item.product.nombre}">Nombre</h3>
+            <p class="cart-item-category" th:text="${item.product.categoria}">Categoría</p>
+            <p class="cart-item-price" th:text="'$' + ${#numbers.formatDecimal(item.product.precio, 1, 'POINT', 2, 'COMMA')}">$0.00</p>
+          </div>
+
+          <div class="cart-item-quantity">
+            <form th:action="@{/carrito/actualizar/{id}(id=${item.product.id})}" method="post" style="display: flex; gap: 5px; align-items: center;">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+              <input type="number" name="cantidad" th:value="${item.cantidad}" min="1" th:max="${item.product.stock}" style="width: 50px; padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+              <button type="submit" class="btn-small" style="background: none; border: 1px solid var(--accent); color: var(--accent); cursor: pointer; padding: 4px 8px; border-radius: 4px;">Ok</button>
+            </form>
+          </div>
+
+          <div class="cart-item-subtotal">
+            <p>Subtotal:</p>
+            <p class="subtotal-price" th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 1, 'POINT', 2, 'COMMA')}">$0.00</p>
+          </div>
+
+          <div class="cart-item-remove">
+            <form th:action="@{/carrito/eliminar/{id}(id=${item.product.id})}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+              <button type="submit" class="btn-remove" title="Eliminar">
+                <i class="fas fa-trash"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="cart-summary">
+        <h2>Resumen del Pedido</h2>
+        
+        <div class="summary-row">
+          <span>Subtotal:</span>
+          <span th:text="'$' + ${#numbers.formatDecimal(total, 1, 'POINT', 2, 'COMMA')}">$0.00</span>
+        </div>
+        
+        <div class="summary-row">
+          <span>Envío:</span>
+          <span>Gratis</span>
+        </div>
+        
+        <div class="summary-divider"></div>
+        
+        <div class="summary-row summary-total">
+          <span>Total:</span>
+          <span th:text="'$' + ${#numbers.formatDecimal(total, 1, 'POINT', 2, 'COMMA')}">$0.00</span>
+        </div>
+
+        <a th:href="@{/carrito/checkout}" class="btn btn-primary btn-block">
+          Proceder al Pago <i class="fas fa-arrow-right"></i>
+        </a>
+
+        <a th:href="@{/catalogo}" class="btn btn-ghost btn-block">
+          Seguir Comprando
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Latin Jewelry Elegance</h4>
+        <p>&copy; 2025 Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <style>
+    .empty-cart {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-cart i {
+      font-size: 80px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .empty-cart h2 {
+      color: var(--dark);
+      margin-bottom: 10px;
+    }
+
+    .empty-cart p {
+      color: var(--muted);
+      margin-bottom: 30px;
+    }
+
+    .cart-container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .cart-items {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .cart-item {
+      display: grid;
+      grid-template-columns: 100px 1fr auto auto auto;
+      gap: 20px;
+      align-items: center;
+      background: var(--card);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .cart-item-image {
+      width: 100px;
+      height: 100px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .cart-item-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .cart-item-details h3 {
+      margin: 0 0 5px 0;
+      font-size: 18px;
+    }
+
+    .cart-item-category {
+      color: var(--muted);
+      font-size: 14px;
+      text-transform: uppercase;
+      margin: 5px 0;
+    }
+
+    .cart-item-price {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 16px;
+      margin: 5px 0;
+    }
+
+    .quantity-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .quantity-form input {
+      width: 60px;
+      padding: 5px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .cart-item-subtotal {
+      text-align: right;
+    }
+
+    .subtotal-price {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-top: 5px;
+    }
+
+    .btn-remove {
+      background: #ff4444;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-remove:hover {
+      background: #cc0000;
+      transform: scale(1.1);
+    }
+
+    .cart-summary {
+      background: var(--card);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      height: fit-content;
+      position: sticky;
+      top: 100px;
+    }
+
+    .cart-summary h2 {
+      margin-top: 0;
+      font-size: 22px;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      font-size: 16px;
+    }
+
+    .summary-divider {
+      border-top: 2px solid #eee;
+      margin: 15px 0;
+    }
+
+    .summary-total {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .btn-block {
+      width: 100%;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .cart-link {
+      position: relative;
+      padding: 10px 15px;
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: #ff4444;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .alert-success {
+      background: #d4f1d4;
+      color: #2d5e2d;
+      border: 1px solid #a5d6a7;
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    @media (max-width: 768px) {
+      .cart-container {
+        grid-template-columns: 1fr;
+      }
+
+      .cart-item {
+        grid-template-columns: 80px 1fr;
+        gap: 10px;
+      }
+
+      .cart-item-quantity,
+      .cart-item-subtotal,
+      .cart-item-remove {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</body>
+</html>

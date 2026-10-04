@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${producto.id == null ? 'Agregar Nueva Joya' : 'Editar Joya'}"></title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .legal-note {
+            font-size: 0.85rem;
+            color: #666;
+            background: #fdfae6;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #f1c40f;
+            margin-bottom: 20px;
+        }
+        .price-breakdown {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid #dee2e6;
+        }
+        .product-preview-container {
+            text-align: center;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 th:text="${producto.id == null ? 'Agregar Nueva Joya' : 'Editar Joya'}"></h1>
+
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <div class="card p-4 shadow-sm">
+            <div class="legal-note">
+                <i class="fas fa-balance-scale"></i> <strong>Sustento Legal (Ley 1480 de 2011):</strong> 
+                Este formulario aplica el principio de <em>Información Pública de Precios</em>. 
+                El precio final debe incluir todos los impuestos (IVA 19%) para garantizar la transparencia 
+                y cumplir con la fijación de precios basada en costos.
+            </div>
+
+            <div class="product-preview-container">
+                <img id="joya-preview" th:src="@{${(producto.imagen != null and producto.imagen != '') ? producto.imagen : '/img/placeholder.webp'}}"
+                     alt="Vista previa de la joya"
+                     style="max-width: 200px; height: 200px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd;">
+                <p class="text-muted mt-2">Vista previa de la joya</p>
+            </div>
+
+            <form th:action="@{/proveedor/productos/guardar}" th:object="${producto}" method="post" enctype="multipart/form-data" class="form-horizontal">
+            <input type="hidden" th:field="*{id}" />
+            
+            <div class="form-group mb-3">
+                <label for="nombre">Nombre de la Joya:</label>
+                <input type="text" id="nombre" th:field="*{nombre}" class="form-control" required />
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="categoria">Categoría:</label>
+                <select id="categoria" th:field="*{categoria}" class="form-control" required>
+                    <option value="">Seleccione...</option>
+                    <option value="Anillos">Anillos</option>
+                    <option value="Collares">Collares</option>
+                    <option value="Pulseras">Pulseras</option>
+                    <option value="Aretes">Aretes</option>
+                    <option value="Cadenas">Cadenas</option>
+                    <option value="Dijes">Dijes</option>
+                    <option value="Tobilleras">Tobilleras</option>
+                    <option value="Relojes">Relojes</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="precio">Precio Final Sugerido al Público (IVA incluido):</label>
+                <input type="number" id="precio" th:field="*{precio}" class="form-control" step="0.01" min="0" required 
+                       oninput="calcularDesglose()" />
+                <small class="text-muted">Cumpliendo Art. 26 Ley 1480: Debe ser el valor total que pagará el cliente.</small>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="ivaPorcentaje">Porcentaje de IVA Aplicable (%):</label>
+                <input type="number" id="ivaPorcentaje" value="19" class="form-control" step="0.01" min="0" 
+                       oninput="calcularDesglose()" />
+                <small class="text-muted">Ajuste este valor según la normativa vigente (ej: 19, 5 o 0).</small>
+            </div>
+
+            <div id="desglosePrecios" class="price-breakdown mb-3" style="display:none;">
+                <h6 class="mb-2"><i class="fas fa-calculator"></i> Desglose de Transparencia:</h6>
+                <div class="d-flex justify-content-between">
+                    <span>Base Gravable (Antes de IVA):</span>
+                    <span id="baseGravable">$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between text-success">
+                    <span id="ivaLabel">IVA Incluido (19%):</span>
+                    <span id="ivaMonto">$0.00</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between font-weight-bold">
+                    <span>Margen Comercial Bruto:</span>
+                    <span id="margenComercial">$0.00</span>
+                </div>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="cantidadOfertada">Cantidad a Vender al Admin:</label>
+                <input type="number" id="cantidadOfertada" th:field="*{cantidadOfertada}" class="form-control" min="0" required />
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="costoProveedor">Costo de Venta al Admin (por unidad):</label>
+                <input type="number" id="costoProveedor" th:field="*{costoProveedor}" class="form-control" step="0.01" min="0" required 
+                       oninput="calcularDesglose()" />
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="imagenArchivo">Imagen de la Joya:</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="file" id="imagenArchivo" name="imagenArchivo" class="form-control" accept="image/*" style="flex: 1;" />
+                </div>
+                <small class="text-muted">Seleccione una fotografía de alta calidad de la joya.</small>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="descripcion">Descripción:</label>
+                <textarea id="descripcion" th:field="*{descripcion}" class="form-control" rows="5"></textarea>
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="detallesVentaAdmin">Detalles de la Venta al Admin:</label>
+                <textarea id="detallesVentaAdmin" th:field="*{detallesVentaAdmin}" class="form-control" rows="3" placeholder="Indique detalles sobre la oferta, materiales, etc."></textarea>
+            </div>
+
+            <div class="form-group form-check">
+                <input type="checkbox" id="destacado" th:field="*{destacado}" class="form-check-input" />
+                <label class="form-check-label" for="destacado">Marcar como Destacado (solo para administradores)</label>
+                <!-- Nota: Aunque el proveedor puede marcarlo, la lógica de negocio en el AdminController
+                     o un servicio podría sobrescribir esto si solo los admins pueden destacar productos.
+                     Para este caso, el proveedor puede sugerirlo, pero un admin lo confirmaría. -->
+            </div>
+
+            <div class="form-group mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enviar Oferta
+                </button>
+                <a th:href="@{/proveedor/productos}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+        </div>
+    </div>
+
+    <script>
+        function calcularDesglose() {
+            const precioFinal = parseFloat(document.getElementById('precio').value) || 0;
+            const costoAdmin = parseFloat(document.getElementById('costoProveedor').value) || 0;
+            const ivaPorcentaje = parseFloat(document.getElementById('ivaPorcentaje').value) || 0;
+            const desgloseDiv = document.getElementById('desglosePrecios');
+
+            if (precioFinal > 0) {
+                desgloseDiv.style.display = 'block';
+                
+                // Cálculo de IVA dinámico basado en el porcentaje ingresado
+                const base = precioFinal / (1 + (ivaPorcentaje / 100));
+                const iva = precioFinal - base;
+                const margen = base - costoAdmin;
+
+                const formatter = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 2 });
+                document.getElementById('baseGravable').innerText = formatter.format(base);
+                document.getElementById('ivaMonto').innerText = formatter.format(iva);
+                document.getElementById('ivaLabel').innerText = `IVA Incluido (${ivaPorcentaje}%):`;
+                document.getElementById('margenComercial').innerText = formatter.format(margen);
+            } else {
+                desgloseDiv.style.display = 'none';
+            }
+        }
+        // Ejecutar al cargar por si es edición
+        window.onload = calcularDesglose;
+
+        // Lógica para vista previa de la joya
+        document.getElementById('imagenArchivo').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('joya-preview');
+                    preview.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>

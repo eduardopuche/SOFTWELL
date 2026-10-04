@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${producto.id == null ? 'Agregar Nueva Joya' : 'Editar Joya'}"></title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 th:text="${producto.id == null ? 'Agregar Nueva Joya' : 'Editar Joya'}"></h1>
+
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <!-- Notificación de campos bloqueados -->
+        <div th:if="${producto.proveedor != null}" class="alert alert-info py-2 mb-3" style="background-color: #e3f2fd; color: #0d47a1; border-left: 5px solid #2196f3; padding: 15px; border-radius: 8px;">
+            <i class="fas fa-lock"></i> <strong>Valores Protegidos:</strong> 
+            Esta joya proviene de un proveedor. La cantidad y el precio están vinculados a la oferta aceptada y no pueden ser modificados.
+        </div>
+
+        <div class="card p-4 shadow-sm">
+            <!-- A. Configurar el formulario con multipart/form-data -->
+            <form th:action="@{/admin/productos/guardar}" th:object="${producto}" method="post" enctype="multipart/form-data" class="form-horizontal">
+                <input type="hidden" th:field="*{id}" />
+
+                <!-- B. Vista previa dinámica (Reemplaza el antiguo campo URL) -->
+                <div class="product-preview-container" style="text-align: center; margin-bottom: 20px; background: #f9f9f9; padding: 10px; border-radius: 12px;">
+                    <img id="joya-preview" th:src="@{${(producto.imagen != null and producto.imagen != '') ? producto.imagen : '/img/placeholder.webp'}}"
+                         alt="Vista previa"
+                         style="max-width: 200px; height: 200px; object-fit: cover; border-radius: 8px; border: 2px solid #ddd;">
+                    <p class="text-muted mt-2">Imagen actual de la joya</p>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="nombre">Nombre de la Joya:</label>
+                    <input type="text" id="nombre" th:field="*{nombre}" class="form-control" required />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="categoria">Categoría:</label>
+                    <select id="categoria" th:field="*{categoria}" class="form-control" required>
+                        <option value="">Seleccione...</option>
+                        <option value="Anillos">Anillos</option>
+                        <option value="Collares">Collares</option>
+                        <option value="Pulseras">Pulseras</option>
+                        <option value="Aretes">Aretes</option>
+                        <option value="Cadenas">Cadenas</option>
+                        <option value="Dijes">Dijes</option>
+                        <option value="Tobilleras">Tobilleras</option>
+                        <option value="Relojes">Relojes</option>
+                    </select>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="proveedor">Proveedor:</label>
+                    <!-- Campo hidden para preservar el proveedor cuando el select está disabled -->
+                    <input type="hidden" th:if="${producto.proveedor != null}" name="proveedor" th:value="${producto.proveedor.id}" />
+                    <select id="proveedor" th:field="*{proveedor}" class="form-control"
+                            th:disabled="${producto.proveedor != null}"
+                            th:style="${producto.proveedor != null ? 'background-color: #f8f9fa; cursor: not-allowed; border-color: #ddd;' : ''}">
+                        <option value="">Sin proveedor (producto propio)</option>
+                        <option th:each="prov : ${proveedores}" th:value="${prov.id}" th:text="${prov.nombre}"></option>
+                    </select>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="precio">Precio de Venta al Público (PVP):</label>
+                    <input type="number" id="precio" th:field="*{precio}" class="form-control" step="0.01" min="0" required 
+                           th:readonly="${producto.proveedor != null}" th:style="${producto.proveedor != null ? 'background-color: #f8f9fa; cursor: not-allowed; border-color: #ddd;' : ''}" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="stock">Stock disponible:</label>
+                    <input type="number" id="stock" th:field="*{stock}" class="form-control" min="0" required 
+                           th:readonly="${producto.proveedor != null}" th:style="${producto.proveedor != null ? 'background-color: #f8f9fa; cursor: not-allowed; border-color: #ddd;' : ''}" />
+                </div>
+
+                <!-- Selector local de archivos y botón de eliminar -->
+                <div class="form-group mb-3">
+                    <label for="imagenArchivo">Seleccionar Imagen (Local):</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="file" id="imagenArchivo" name="imagenArchivo" class="form-control" accept="image/*" style="flex: 1;" />
+                        <button type="button" id="btn-eliminar-foto-producto" class="btn" style="background: #fff0f0; color: #d9534f; border: 1px solid #d9534f; padding: 10px 15px;" th:if="${producto.id != null and producto.imagen != null and producto.imagen != ''}">
+                            <i class="fas fa-trash-alt"></i> Eliminar Foto
+                        </button>
+                    </div>
+                    <small class="text-muted">Formatos permitidos: JPG, PNG, WebP.</small>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="descripcion">Descripción detallada:</label>
+                    <textarea id="descripcion" th:field="*{descripcion}" class="form-control" rows="5"></textarea>
+                </div>
+
+                <div class="form-group form-check mb-3">
+                    <input type="checkbox" id="destacado" th:field="*{destacado}" class="form-check-input" />
+                    <label class="form-check-label" for="destacado">Marcar como joya destacada</label>
+                </div>
+
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Producto
+                    </button>
+                    <a th:href="@{/admin/productos}" class="btn btn-secondary">Regresar</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Formulario oculto para eliminar foto vía POST -->
+        <form id="form-eliminar-foto-producto" th:if="${producto.id != null}" th:action="@{/admin/productos/eliminar-foto/{id}(id=${producto.id})}" method="POST" style="display: none;">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        </form>
+    </div>
+
+    <script>
+        // Lógica para previsualizar la imagen antes de subirla
+        document.getElementById('imagenArchivo').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('joya-preview').src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Manejo del botón de eliminar foto
+        const btnEliminar = document.getElementById('btn-eliminar-foto-producto');
+        if (btnEliminar) {
+            btnEliminar.addEventListener('click', function() {
+                if (confirm('¿Estás seguro de que deseas eliminar la imagen actual?')) {
+                    document.getElementById('form-eliminar-foto-producto').submit();
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial de Ofertas - Proveedor</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .table-container { margin-top: 20px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .product-img { width: 55px; height: 55px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
+        .table th { background-color: #f8f9fa; color: #555; font-weight: 600; text-transform: uppercase; font-size: 0.82rem; letter-spacing: 0.5px; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; }
+        .status-ACEPTADA { background: #d4edda; color: #155724; }
+        .status-RECHAZADA { background: #f8d7da; color: #721c24; }
+        .price-text { font-family: 'Courier New', Courier, monospace; font-weight: bold; color: #2c3e50; }
+        .section-title { margin-top: 40px; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #eee; color: #2c3e50; }
+        .nota-text { font-size: 0.78rem; color: #c0392b; font-style: italic; }
+        .empty-msg { text-align: center; padding: 30px; color: #888; background: #fafafa; border-radius: 10px; border: 1px dashed #ddd; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
+        <h1><i class="fas fa-history"></i> Historial de Ofertas</h1>
+        <a th:href="@{/proveedor/productos}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Catálogo
+        </a>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <!-- OFERTAS ACEPTADAS -->
+    <h2 class="section-title">
+        <i class="fas fa-check-circle" style="color: #27ae60;"></i> Ofertas Aceptadas
+    </h2>
+
+    <div th:if="${#lists.isEmpty(ofertasAceptadas)}" class="empty-msg">
+        <i class="fas fa-inbox fa-2x mb-2"></i><br>No tienes ofertas aceptadas aún.
+    </div>
+
+    <div th:if="${not #lists.isEmpty(ofertasAceptadas)}" class="table-container">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Imagen</th>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Costo (tu precio)</th>
+                    <th>Precio de venta</th>
+                    <th>Unidades aceptadas</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="o : ${ofertasAceptadas}">
+                    <td>
+                        <img th:src="@{${(o.imagen != null and o.imagen != '') ? o.imagen : '/img/placeholder.webp'}}"
+                             class="product-img" th:alt="${o.nombre}">
+                    </td>
+                    <td style="font-weight: 600;" th:text="${o.nombre}"></td>
+                    <td th:text="${o.categoria}"></td>
+                    <td class="price-text" th:text="'$' + ${#numbers.formatDecimal(o.costoProveedor, 1, 'POINT', 2, 'COMMA')}"></td>
+                    <td class="price-text" th:text="'$' + ${#numbers.formatDecimal(o.precio, 1, 'POINT', 2, 'COMMA')}"></td>
+                    <td style="font-weight: bold; color: #27ae60;" th:text="${o.stockProveedor}"></td>
+                    <td th:text="${o.fechaOferta != null ? #temporals.format(o.fechaOferta, 'dd/MM/yyyy HH:mm') : 'N/A'}"></td>
+                    <td><span class="status-badge status-ACEPTADA">Aceptada</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- OFERTAS RECHAZADAS / PARCIALES -->
+    <h2 class="section-title" style="margin-top: 50px;">
+        <i class="fas fa-times-circle" style="color: #c0392b;"></i> Ofertas Rechazadas o Parciales
+    </h2>
+
+    <div th:if="${#lists.isEmpty(ofertasRechazadas)}" class="empty-msg">
+        <i class="fas fa-inbox fa-2x mb-2"></i><br>No tienes ofertas rechazadas.
+    </div>
+
+    <div th:if="${not #lists.isEmpty(ofertasRechazadas)}" class="table-container">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Imagen</th>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Costo (tu precio)</th>
+                    <th>Unidades no tomadas</th>
+                    <th>Nota del admin</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="o : ${ofertasRechazadas}">
+                    <td>
+                        <img th:src="@{${(o.imagen != null and o.imagen != '') ? o.imagen : '/img/placeholder.webp'}}"
+                             class="product-img" th:alt="${o.nombre}">
+                    </td>
+                    <td style="font-weight: 600;" th:text="${o.nombre}"></td>
+                    <td th:text="${o.categoria}"></td>
+                    <td class="price-text" th:text="'$' + ${#numbers.formatDecimal(o.costoProveedor, 1, 'POINT', 2, 'COMMA')}"></td>
+                    <td style="font-weight: bold; color: #c0392b;" th:text="${o.cantidadOfertada}"></td>
+                    <td>
+                        <span th:if="${o.detallesVentaAdmin != null and !#strings.isEmpty(o.detallesVentaAdmin)}"
+                              class="nota-text" th:text="${o.detallesVentaAdmin}"></span>
+                        <span th:unless="${o.detallesVentaAdmin != null and !#strings.isEmpty(o.detallesVentaAdmin)}"
+                              class="text-muted" style="font-size: 0.8rem;">Sin nota</span>
+                    </td>
+                    <td th:text="${o.fechaOferta != null ? #temporals.format(o.fechaOferta, 'dd/MM/yyyy HH:mm') : 'N/A'}"></td>
+                    <td><span class="status-badge status-RECHAZADA">Rechazada</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="text-center mt-5 mb-5">
+        <a th:href="@{/proveedor}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Dashboard
+        </a>
+    </div>
+</div>
+</body>
+</html>

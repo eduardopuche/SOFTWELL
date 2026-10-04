@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="admin-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h3>Admin LJE</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="nav-item active"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a th:href="@{/admin/productos}" class="nav-item"><i class="fas fa-box-open"></i> Productos</a>
+            <a th:href="@{/admin/ofertas}" class="nav-item"><i class="fas fa-handshake"></i> Ofertas</a>
+            <a th:href="@{/admin/pedidos}" class="nav-item"><i class="fas fa-receipt"></i> Pedidos</a>
+            <a th:href="@{/admin/clientes}" class="nav-item"><i class="fas fa-users"></i> Clientes</a>
+            <a th:href="@{/admin/testimonios}" class="nav-item"><i class="fas fa-comment-dots"></i> Testimonios</a>
+            <a th:href="@{/admin/reportes}" class="nav-item"><i class="fas fa-chart-bar"></i> Reportes</a>
+        </nav>
+        <div class="sidebar-footer">
+            <form th:action="@{/logout}" method="post" style="margin:0;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    
+    <main class="main-content">
+        <header class="admin-header">
+            <h1>Dashboard</h1>
+        </header>
+
+        <section class="content-section active">
+
+           
+            <div class="dashboard-stats">
+                <div class="stat-card" style="flex-grow: 1;">
+                    <div class="stat-icon" style="background-color: #e0f7fa; padding: 20px;">
+                        <i class="fas fa-box-open fa-2x" style="color: #00796b;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-title" style="font-size: 1rem;">Total Productos</span>
+                        <span class="stat-value" style="font-size: 2.2rem;" th:text="${totalProductos}">0</span>
+                    </div>
+                </div>
+                <div class="stat-card" style="flex-grow: 1;">
+                    <div class="stat-icon" style="background-color: #f3e5f5; padding: 20px;">
+                        <i class="fas fa-handshake fa-2x" style="color: #7b1fa2;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-title" style="font-size: 1rem;">Ofertas Pendientes</span>
+                        <span class="stat-value" style="font-size: 2.2rem; color: #7b1fa2;" th:text="${totalOfertas}">0</span>
+                        <a th:href="@{/admin/ofertas}" style="font-size: 0.8rem; display: block;">Revisar ahora →</a>
+                    </div>
+                </div>
+                <div class="stat-card" style="flex-grow: 1;">
+                    <div class="stat-icon" style="background-color: #fff3e0; padding: 20px;">
+                        <i class="fas fa-users fa-2x" style="color: #f57c00;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-title" style="font-size: 1rem;">Total Clientes</span>
+                        <span class="stat-value" style="font-size: 2.2rem;" th:text="${totalClientes}">0</span>
+                    </div>
+                </div>
+                <div class="stat-card" style="flex-grow: 1;">
+                    <div class="stat-icon" style="background-color: #fce4ec; padding: 20px;">
+                        <i class="fas fa-star fa-2x" style="color: #d81b60;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-title" style="font-size: 1rem;">Productos Destacados</span>
+                        <span class="stat-value" style="font-size: 2.2rem;" th:text="${totalDestacados}">0</span>
+                    </div>
+                </div>
+                <div class="stat-card" style="flex-grow: 1;">
+                    <div class="stat-icon" style="background-color: #e3f2fd; padding: 20px;">
+                        <i class="fas fa-box-open fa-2x" style="color: #1e88e5;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-title" style="font-size: 1rem;">Total Pedidos</span>
+                        <span class="stat-value" style="font-size: 2.2rem;" th:text="${totalPedidos}">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ALERTAS -->
+            <div th:if="${!productosAgotados.isEmpty() or !productosBajoStock.isEmpty() or totalOfertas > 0}"
+                 style="margin-top: 30px;">
+                <h2 style="font-size: 1.3rem; margin-bottom: 15px; color: #c62828;">
+                    <i class="fas fa-bell"></i> Alertas
+                </h2>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+
+                    <!-- Ofertas pendientes -->
+                    <div th:if="${totalOfertas > 0}"
+                         style="background:#fff3e0; border-left:4px solid #f57c00; padding:14px 18px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <span><i class="fas fa-handshake" style="color:#f57c00;"></i>
+                            <strong th:text="${totalOfertas}">0</strong> oferta(s) pendiente(s) de revisión.</span>
+                        <a th:href="@{/admin/ofertas}" style="font-size:0.85rem; color:#f57c00; font-weight:600;">Revisar →</a>
+                    </div>
+
+                    <!-- Productos agotados -->
+                    <div th:each="p : ${productosAgotados}"
+                         style="background:#ffebee; border-left:4px solid #c62828; padding:14px 18px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <span><i class="fas fa-times-circle" style="color:#c62828;"></i>
+                            <strong th:text="${p.nombre}">Producto</strong> — Stock agotado en tienda.</span>
+                        <a th:href="@{/admin/productos}" style="font-size:0.85rem; color:#c62828; font-weight:600;">Ver productos →</a>
+                    </div>
+
+                    <!-- Productos con stock bajo -->
+                    <div th:each="p : ${productosBajoStock}"
+                         style="background:#fffde7; border-left:4px solid #f9a825; padding:14px 18px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <span><i class="fas fa-exclamation-triangle" style="color:#f9a825;"></i>
+                            <strong th:text="${p.nombre}">Producto</strong> — Solo
+                            <strong th:text="${p.stock}">0</strong> unidad(es) en tienda.</span>
+                        <a th:href="@{/admin/productos}" style="font-size:0.85rem; color:#f9a825; font-weight:600;">Ver productos →</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-featured-products" style="margin-top: 40px;">
+                <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: var(--text-dark);">
+                    <i class="fas fa-star" style="color: #fdd835;"></i>
+                    Vista Rápida de Productos Destacados
+                </h2>
+
+                <div th:if="${#lists.isEmpty(productosDestacados)}" class="alert alert-info" style="text-align: center;">
+                    No hay productos marcados como destacados actualmente.
+                </div>
+
+                <table th:unless="${#lists.isEmpty(productosDestacados)}" class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Imagen</th>
+                            <th>Nombre</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="producto : ${productosDestacados}">
+                            <td th:text="${producto.id}">1</td>
+                            <td>
+                                <img th:src="@{${producto.imagen}}" alt="Imagen del producto" style="width: 45px; height: 45px; object-fit: cover; border-radius: 8px;">
+                            </td>
+                            <td th:text="${producto.nombre}">Nombre del Producto</td>
+                            <td th:text="'$' + ${#numbers.formatDecimal(producto.precio, 1, 'POINT', 2, 'COMMA')}">$0.00</td>
+                            <td th:text="${producto.stock}">0</td>
+                            <td>
+                                <a th:href="@{/admin/productos/editar/{id}(id=${producto.id})}" class="btn btn-ghost" style="padding: 6px 10px; font-size: 12px;">
+                                    <i class="fas fa-edit"></i> Editar
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+</body>
+</html>

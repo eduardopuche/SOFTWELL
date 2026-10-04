@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Pedidos - Admin</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="admin-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h3>Admin LJE</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a th:href="@{/admin/productos}" class="nav-item"><i class="fas fa-box-open"></i> Productos</a>
+            <a th:href="@{/admin/ofertas}" class="nav-item"><i class="fas fa-handshake"></i> Ofertas</a>
+            <a th:href="@{/admin/reportes}" class="nav-item"><i class="fas fa-chart-bar"></i> Reportes</a>
+            <a th:href="@{/admin/pedidos}" class="nav-item active"><i class="fas fa-receipt"></i> Pedidos</a>
+            <a th:href="@{/admin/clientes}" class="nav-item"><i class="fas fa-users"></i> Clientes</a>
+            <a th:href="@{/admin/testimonios}" class="nav-item"><i class="fas fa-comment-dots"></i> Testimonios</a>
+        </nav>
+        <div class="sidebar-footer">
+            <form th:action="@{/logout}" method="post" style="margin:0;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </form>
+        </div>
+    </aside>
+
+   
+    <main class="main-content">
+        <header class="admin-header">
+            <h1>Gestión de Pedidos</h1>
+        </header>
+
+        <section class="content-section active">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Todos los Pedidos</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="admin-table" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>ID Pedido</th>
+                                    <th>Fotos</th>
+                                    <th>Cliente</th>
+                                    <th>Email</th>
+                                    <th>Fecha</th>
+                                    <th>Total</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="pedido : ${pedidos}">
+                                    <td th:text="${pedido.id}">1</td>
+                                    <td>
+                                        <div style="display: flex; gap: 4px;">
+                                            <img th:each="imgUrl : ${#strings.arraySplit(pedido.imagenesItems, ',')}" 
+                                                 th:src="${imgUrl}" 
+                                                 style="width: 30px; height: 30px; object-fit: cover; border-radius: 3px; border: 1px solid #eee;"
+                                                 onerror="this.src='/img/placeholder.webp'">
+                                        </div>
+                                    </td>
+                                    <td th:text="${pedido.nombreCliente}">Nombre Cliente</td>
+                                    <td th:text="${pedido.emailCliente}"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="4c29212d25200c2f202529223829622f2321">[email&#160;protected]</a></td>
+                                    <td th:text="${#temporals.format(pedido.fechaCreacion, 'dd-MM-yyyy HH:mm')}">01-01-2025</td>
+                                    <td th:text="'$' + ${#numbers.formatDecimal(pedido.total, 1, 'POINT', 2, 'COMMA')}">$100.00</td>
+                                    <td>
+                                        <a th:href="@{/admin/pedidos/{id}(id=${pedido.id})}" class="btn btn-info btn-sm" title="Ver Detalle">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(pedidos)}">
+                                    <td colspan="6" class="text-center">No hay pedidos registrados.</td>
+                                </tr>
+                            </tbody>
+                        </table>

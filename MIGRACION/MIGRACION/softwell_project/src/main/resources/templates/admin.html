@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - LJE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-gold: #c5a059;
+            --dark-bg: #1a1a1a;
+            --sidebar-width: 260px;
+            --light-gray: #f8f9fa;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--light-gray);
+        }
+
+        /* Contenedor Principal a Pantalla Completa */
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+            width: 100vw;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Fija */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--dark-bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .sidebar-header h3 {
+            color: var(--primary-gold);
+            margin: 0;
+            letter-spacing: 2px;
+        }
+
+        .sidebar-nav {
+            flex-grow: 1;
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 30px;
+            color: #bbb;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: #333;
+            color: var(--primary-gold);
+            border-left: 4px solid var(--primary-gold);
+        }
+
+        .nav-item i { margin-right: 15px; }
+
+        .sidebar-footer { padding: 20px; border-top: 1px solid #333; }
+
+        .logout-btn {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid #ff6b6b;
+            color: #ff6b6b;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        .logout-btn:hover { background: #ff6b6b; color: white; }
+
+        /* Contenido Principal Centrado y Fluido */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centra el contenido horizontalmente */
+        }
+
+        .content-wrapper {
+            width: 100%;
+            max-width: 1200px; /* Ancho máximo para legibilidad */
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .admin-header h1 { font-size: 28px; color: #333; margin: 0; }
+
+        /* Tarjetas de Estadísticas */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            margin-right: 20px;
+        }
+
+        /* Tabla Centrada y Estilizada */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center; /* Centra el texto de las celdas */
+        }
+
+        .admin-table th {
+            background-color: #f1f3f5;
+            padding: 15px;
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .admin-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-primary { background: var(--primary-gold); color: white; border: none; }
+        .btn-primary:hover { background: #b08d4a; }
+
+        .btn-ghost { border: 1px solid #ddd; color: #666; background: white; }
+        .btn-ghost:hover { background: #f1f3f5; }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-gray { background: #e9ecef; color: #495057; }
+
+    </style>
+</head>
+<body>
+
+<div class="admin-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h3>LATIN JEWELRY</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="nav-item active">
+                <i class="fas fa-gem"></i> Productos
+            </a>
+            </nav>
+        <div class="sidebar-footer">
+            <form th:action="@{/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="content-wrapper">
+            
+            <header class="admin-header">
+                <h1>Gestión de Inventario</h1>
+                <a th:href="@{/admin/productos/nuevo}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Añadir Producto
+                </a>
+            </header>
+
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #e0f7fa;">
+                        <i class="fas fa-box-open" style="color: #00796b;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-title">Total Productos</div>
+                        <div class="stat-value" th:text="${totalProductos}" style="font-size: 24px; font-weight: bold;">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: #fff3e0;">
+                        <i class="fas fa-users" style="color: #f57c00;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-title">Total Clientes</div>
+                        <div class="stat-value" th:text="${totalClientes}" style="font-size: 24px; font-weight: bold;">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div th:if="${success}" class="alert badge-success" style="padding: 15px; margin-bottom: 20px; border-radius: 8px;">
+                <i class="fas fa-check-circle"></i> <span th:text="${success}"></span>
+            </div>
+
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Imagen</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Destacado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="producto : ${productos}">
+                            <td th:text="${producto.id}">1</td>
+                            <td>
+                                <img th:src="@{${producto.imagen}}" alt="Producto" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;">
+                            </td>
+                            <td th:text="${producto.nombre}" style="font-weight: 600;"></td>
+                            <td th:text="${producto.categoria}"></td>
+                            <td th:text="'$' + ${#numbers.formatDecimal(producto.precio, 1, 'POINT', 2, 'COMMA')}" style="color: #2e7d32; font-weight: 600;"></td>
+                            <td th:text="${producto.stock}"></td>
+                            <td>
+                                <span th:if="${producto.destacado}" class="badge badge-success">Sí</span>
+                                <span th:unless="${producto.destacado}" class="badge badge-gray">No</span>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 10px; justify-content: center;">
+                                    <a th:href="@{/admin/productos/editar/{id}(id=${producto.id})}" class="btn btn-ghost">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form th:action="@{/admin/productos/eliminar/{id}(id=${producto.id})}" method="post" onsubmit="return confirm('¿Eliminar producto?');">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                        <button type="submit" class="btn btn-ghost" style="color: #ff6b6b; border-color: #ffc9c9;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(productos)}">
+                            <td colspan="8" style="padding: 40px; color: #999;">No hay productos registrados en el inventario.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+</body>
+</html>

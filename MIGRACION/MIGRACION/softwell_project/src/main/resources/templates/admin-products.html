@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos - Admin</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="admin-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h3>Admin LJE</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a th:href="@{/admin/productos}" class="nav-item active"><i class="fas fa-box-open"></i> Productos</a>
+            <a th:href="@{/admin/ofertas}" class="nav-item"><i class="fas fa-handshake"></i> Ofertas</a>
+            <a th:href="@{/admin/pedidos}" class="nav-item"><i class="fas fa-receipt"></i> Pedidos</a>
+            <a th:href="@{/admin/clientes}" class="nav-item"><i class="fas fa-users"></i> Clientes</a>
+            <a th:href="@{/admin/testimonios}" class="nav-item"><i class="fas fa-comment-dots"></i> Testimonios</a>
+        </nav>
+        <div class="sidebar-footer">
+            <form th:action="@{/logout}" method="post" style="margin:0;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </form>
+        </div>
+    </aside>
+
+   
+    <main class="main-content">
+        <header class="admin-header">
+            <h1>Gestión de Productos</h1>
+            <a th:href="@{/admin/productos/nuevo}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Añadir Producto
+            </a>
+        </header>
+
+        <section class="content-section active">
+            
+            <div th:if="${success}" class="alert alert-success" style="background-color: #d4edda; color: #155724; border-color: #c3e6cb; margin-bottom: 20px;">
+                <i class="fas fa-check-circle"></i>
+                <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-error" style="margin-bottom: 20px;">
+                <i class="fas fa-exclamation-circle"></i>
+                <span th:text="${error}"></span>
+            </div>
+
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Imagen</th>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Tienda</th>
+                        <th>Bodega</th>
+                        <th>Destacado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="producto : ${productos}">
+                        <td th:text="${producto.id}">1</td>
+                        <td>
+                            <img th:src="@{${producto.imagen}}" alt="Imagen del producto" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
+                        </td>
+                        <td th:text="${producto.nombre}">o</td>
+                        <td th:text="${producto.categoria}"></td>
+                        <td th:text="'$' + ${#numbers.formatDecimal(producto.precio, 1, 'POINT', 2, 'COMMA')}">$450.00</td>
+                        <!-- Stock en tienda -->
+                        <td>
+                            <span th:text="${producto.stock}"
+                                  th:style="${producto.stock == 0 ? 'color:#dc3545;font-weight:bold;' : ''}">
+                            </span>
+                        </td>
+                        <!-- Bodega -->
+                        <td>
+                            <span th:with="bodega=${producto.stockProveedor - producto.stock}"
+                                  th:text="${bodega}"
+                                  th:style="${bodega > 0 ? 'color:#856404;font-weight:bold;' : 'color:#aaa;'}">
+                            </span>
+                            <button th:if="${producto.stockProveedor - producto.stock > 0}"
+                                    type="button"
+                                    class="btn btn-ghost btn-subir-bodega"
+                                    style="padding: 3px 7px; font-size: 11px; margin-left:4px;"
+                                    th:data-id="${producto.id}"
+                                    th:data-bodega="${producto.stockProveedor - producto.stock}"
+                                    th:data-nombre="${producto.nombre}">
+                                <i class="fas fa-arrow-up"></i> Subir
+                            </button>
+                        </td>
+                        <td>
+                            <span th:if="${producto.destacado}" class="badge badge-success">Sí</span>
+                            <span th:unless="${producto.destacado}" class="badge badge-gray">No</span>
+                        </td>
+                        <td style="display: flex; gap: 8px; align-items: center;">
+                            <a th:href="@{/admin/productos/editar/{id}(id=${producto.id})}" class="btn btn-ghost" style="padding: 6px 10px; font-size: 12px;">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            <form th:action="@{/admin/productos/eliminar/{id}(id=${producto.id})}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este producto?');">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                <button type="submit" class="btn btn-ghost" style="padding: 6px 10px; font-size: 12px; color: #ff6b6b; border-color: #ff6b6b;">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(productos)}">
+                        <td colspan="8" style="text-align: center; padding: 20px;">No hay productos para mostrar.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+
+
+<!-- Modal mover a tienda -->
+<div id="modalBodega" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:12px; padding:30px; min-width:350px; max-width:450px;">
+        <h3 style="margin-bottom:5px;"><i class="fas fa-warehouse"></i> Subir de Bodega a Tienda</h3>
+        <p id="modalBodegaNombre" style="color:#666; margin-bottom:20px;"></p>
+        <form id="formBodega" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <label style="font-weight:600;">Unidades a subir a tienda:</label>
+            <p id="modalBodegaDisponible" style="font-size:0.85rem; color:#856404; margin:4px 0 10px;"></p>
+            <input type="number" id="inputUnidadesBodega" name="cantidad" min="1" value="1"
+                   style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-size:1rem; margin-bottom:20px;">
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button type="button" onclick="cerrarModalBodega()" class="btn btn-ghost">Cancelar</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-arrow-up"></i> Subir a Tienda</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.btn-subir-bodega').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var id = this.getAttribute('data-id');
+        var bodega = this.getAttribute('data-bodega');
+        var nombre = this.getAttribute('data-nombre');
+        document.getElementById('modalBodega').style.display = 'flex';
+        document.getElementById('modalBodegaNombre').textContent = nombre;
+        document.getElementById('modalBodegaDisponible').textContent = 'Disponible en bodega: ' + bodega + ' uds.';
+        document.getElementById('inputUnidadesBodega').max = bodega;
+        document.getElementById('inputUnidadesBodega').value = 1;
+        document.getElementById('formBodega').action = '/admin/productos/mover-a-tienda/' + id;
+    });
+});
+function cerrarModalBodega() {
+    document.getElementById('modalBodega').style.display = 'none';
+}
+</script>
+</body>
+</html>

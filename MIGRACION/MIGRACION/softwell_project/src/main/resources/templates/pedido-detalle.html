@@ -1,0 +1,275 @@
+<style>
+    /* 1. Reset y Base */
+    * { box-sizing: border-box; }
+    body, html { 
+        margin: 0; padding: 0; 
+        font-family: 'Poppins', sans-serif; 
+        background: #f4f4f4; 
+    }
+
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        min-height: 100vh;
+    }
+
+    /* 2. El Cuadro Blanco (Main Card) */
+    .login-box { 
+        width: 100%;
+        max-width: 1100px; 
+        background: #fff; 
+        border-radius: 40px; 
+        padding: 50px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    .login-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #f1f1f1;
+        padding-bottom: 15px;
+    }
+
+    .login-header h1 {
+        font-size: 1.5rem; 
+        color: #c5a059;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* 3. Layout de dos columnas */
+    .pedido-main-content {
+        display: grid;
+        grid-template-columns: 320px 1fr; 
+        gap: 40px;
+        align-items: start;
+    }
+
+    /* 4. Títulos de sección */
+    .detalle-seccion h3 {
+        color: #c5a059;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .detalle-seccion h3::before {
+        content: "";
+        display: inline-block;
+        width: 4px;
+        height: 20px;
+        background: #c5a059;
+        border-radius: 2px;
+    }
+
+    /* 5. Tarjetas de Información */
+    .info-card, .summary-total-section {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+
+    .info-card p { margin: 8px 0; font-size: 0.9rem; color: #444; }
+
+    /* 6. VENTANA DE ARTÍCULOS CON BARRA DE DESLIZAMIENTO */
+    .table-responsive {
+        width: 100%;
+        max-height: 480px; 
+        overflow-y: auto;  
+        overflow-x: hidden;
+        border: 1px solid #eee;
+        border-radius: 15px;
+        padding-right: 5px;
+    }
+
+    .table-responsive::-webkit-scrollbar {
+        width: 6px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f9f9f9;
+        border-radius: 10px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #c5a059;
+        border-radius: 10px;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed; 
+    }
+
+    .table thead th {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        z-index: 2;
+        text-align: center;
+        font-size: 0.75rem;
+        color: #888;
+        padding: 15px 10px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .table td {
+        padding: 15px 5px;
+        border-bottom: 1px solid #f9f9f9;
+        vertical-align: middle;
+        font-size: 0.85rem;
+    }
+
+    .col-img { width: 70px; }
+    .col-prod { width: auto; }
+    .col-cant { width: 60px; text-align: center; }
+    .col-precio { width: 140px; text-align: right; }
+    .col-sub { width: 140px; text-align: right; }
+
+    .product-img-sm {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1px solid #eee;
+    }
+
+    /* 7. Resumen Dorado */
+    .summary-total-section {
+        background: #fffdf6; 
+        border: 1px solid #f7e8a1;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+    }
+
+    .summary-row.final-total {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #f7e8a1;
+        font-size: 1.1rem; 
+        font-weight: 700;
+        color: #c5a059;
+    }
+
+    .summary-row.final-total span:last-child {
+        font-size: 1.2rem; 
+    }
+
+    /* ESTILO PARA EL BOTÓN DE REGRESO POR FUERA */
+    .btn-regresar-perfil {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 14px;
+        background: transparent;
+        color: #c5a059;
+        text-decoration: none;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        border: 2px solid #c5a059;
+        transition: all 0.3s ease;
+        margin-top: -10px; /* Ajuste para pegarlo más al bloque superior */
+    }
+    .btn-regresar-perfil:hover {
+        background: #c5a059;
+        color: #fff;
+    }
+
+    @media (max-width: 900px) {
+        .pedido-main-content { grid-template-columns: 1fr; }
+        .login-box { padding: 20px; }
+        .btn-regresar-perfil { margin-top: 10px; margin-bottom: 30px; }
+    }
+</style>
+
+<div class="login-container">
+    <div class="login-box">
+        <header class="login-header">
+            <h1 th:text="'ID DE COMPRA: #' + ${pedido.id}">Detalle del Pedido</h1>
+            <div class="order-meta">
+                <small th:text="${#temporals.format(pedido.fechaCreacion, 'dd-MM-yyyy HH:mm')}" style="color:#888;"></small>
+            </div>
+        </header>
+
+        <div class="pedido-main-content">
+            <aside>
+                <div class="detalle-seccion">
+                    <h3><i class="fas fa-truck"></i> Envío</h3>
+                    <div class="info-card">
+                        <p><strong>Cliente:</strong> <span th:text="${pedido.nombreCliente}"></span></p>
+                        <p><strong>Dirección:</strong> <span th:text="${pedido.direccionCliente}"></span></p>
+                        <p><strong>Teléfono:</strong> <span th:text="${pedido.telefonoCliente}"></span></p>
+                        <p><strong>Email:</strong> <span th:text="${pedido.emailCliente}"></span></p>
+                    </div>
+                </div>
+
+                <div class="detalle-seccion">
+                    <h3><i class="fas fa-file-invoice-dollar"></i> Resumen</h3>
+                    <div class="summary-total-section">
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <strong th:text="'$' + ${#numbers.formatDecimal(pedido.total - pedido.iva - pedido.costoEnvio, 1, 'POINT', 2, 'COMMA')}"></strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>IVA (19%):</span>
+                            <strong th:text="'$' + ${#numbers.formatDecimal(pedido.iva, 1, 'POINT', 2, 'COMMA')}"></strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Envío:</span>
+                            <strong th:text="'$' + ${#numbers.formatDecimal(pedido.costoEnvio, 1, 'POINT', 2, 'COMMA')}"></strong>
+                        </div>
+                        <div class="summary-row final-total">
+                            <span>TOTAL</span>
+                            <span th:text="'$' + ${#numbers.formatDecimal(pedido.total, 1, 'POINT', 2, 'COMMA')}"></span>
+                        </div>
+                    </div>
+
+                    <a th:href="@{/perfil}" class="btn-regresar-perfil">
+                        <i class="fas fa-user"></i> Regresar al perfil
+                    </a>
+                </div>
+            </aside>
+
+            <main>
+                <div class="detalle-seccion">
+                    <h3><i class="fas fa-shopping-bag"></i> Artículos</h3>
+                    <div class="info-card" style="background: #fffdf6; border: 1px solid #c5a059; padding: 25px;">
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+                            <!-- Recorremos las imágenes guardadas en el string separado por comas -->
+                            <div th:each="imgUrl : ${#strings.arraySplit(pedido.imagenesItems, ',')}" style="text-align: center;">
+                                <img th:src="${imgUrl}" class="product-img-sm" 
+                                     style="width: 100px; height: 100px; object-fit: cover; border: 2px solid #c5a059; border-radius: 12px; background: #fff;">
+                            </div>
+                        </div>
+                        <hr style="border: 0; border-top: 1px solid #e5d0a9; margin: 20px 0;">
+                        <div style="font-size: 1.1rem; color: #333; line-height: 1.6;">
+                            <p><strong><i class="fas fa-gem" style="color: #c5a059;"></i> Productos:</strong></p>
+                            <p th:text="${pedido.descripcionItems}"></p>
+                            <p style="margin-top: 15px; border-top: 1px dashed #c5a059; padding-top: 10px;">
+                                <strong>Subtotal de Joyas:</strong> 
+                                <span style="float: right; font-weight: bold;" th:text="'$' + ${#numbers.formatDecimal(pedido.total - pedido.iva - pedido.costoEnvio, 1, 'POINT', 2, 'COMMA')}"></span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</div>

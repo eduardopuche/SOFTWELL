@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Ofertas de Proveedores</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .offer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        .offer-card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #eee;
+            transition: transform 0.3s ease;
+        }
+        .offer-card:hover { transform: translateY(-5px); }
+        .offer-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            background-color: #f8f9fa;
+        }
+        .offer-body { padding: 20px; flex-grow: 1; }
+        .offer-footer {
+            padding: 15px 20px;
+            background: #f9f9f9;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 12px;
+        }
+        .info-row { margin-bottom: 10px; font-size: 0.95rem; color: #444; }
+        .info-row i { width: 20px; color: #d4af37; }
+ 
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.55);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 14px;
+            padding: 30px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .modal-box h4 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #d4af37;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .modal-box .form-group { margin-bottom: 16px; }
+        .modal-box label { font-weight: 600; font-size: 0.9rem; color: #444; display: block; margin-bottom: 5px; }
+        .modal-box input { width: 100%; padding: 9px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box; }
+        .modal-box input:focus { border-color: #d4af37; outline: none; box-shadow: 0 0 0 3px rgba(212,175,55,0.2); }
+        .modal-hint { font-size: 0.8rem; color: #888; margin-top: 4px; }
+        .modal-error { font-size: 0.82rem; color: #c0392b; margin-top: 4px; display: none; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 22px; }
+        .modal-actions button { flex: 1; padding: 10px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; font-size: 0.95rem; }
+        .btn-confirmar { background: #27ae60; color: white; }
+        .btn-confirmar:hover { background: #219a52; }
+        .btn-cancelar { background: #ecf0f1; color: #555; }
+        .btn-cancelar:hover { background: #dde1e4; }
+        .modal-close {
+            position: absolute;
+            top: 14px; right: 18px;
+            background: none; border: none;
+            font-size: 1.3rem; color: #aaa;
+            cursor: pointer;
+        }
+        .modal-close:hover { color: #555; }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h3>Admin LJE</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a th:href="@{/admin/productos}" class="nav-item"><i class="fas fa-box-open"></i> Productos</a>
+            <a th:href="@{/admin/ofertas}" class="nav-item active"><i class="fas fa-handshake"></i> Ofertas</a>
+            <a th:href="@{/admin/reportes}" class="nav-item"><i class="fas fa-chart-bar"></i> Reportes</a>
+            <a th:href="@{/admin/historial-ofertas}" class="nav-item"><i class="fas fa-history"></i> Historial Ofertas</a>
+            <a th:href="@{/admin/pedidos}" class="nav-item"><i class="fas fa-receipt"></i> Pedidos</a>
+            <a th:href="@{/admin/clientes}" class="nav-item"><i class="fas fa-users"></i> Clientes</a>
+            <a th:href="@{/admin/testimonios}" class="nav-item"><i class="fas fa-comment-dots"></i> Testimonios</a>
+        </nav>
+        <div class="sidebar-footer">
+            <form th:action="@{/logout}" method="post" style="margin:0;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </form>
+        </div>
+    </aside>
+ 
+    <main class="main-content">
+        <header class="admin-header">
+            <h1>Gestión de Ofertas</h1>
+        </header>
+        <section class="content-section active">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4 mt-4">
+                    <h2><i class="fas fa-handshake"></i> Ofertas de Stock Pendientes</h2>
+                </div>
+ 
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+ 
+        <div th:if="${#lists.isEmpty(ofertas)}" class="alert alert-info text-center">
+            <i class="fas fa-info-circle"></i> No hay nuevas ofertas de mercancía para revisar.
+        </div>
+ 
+        <div class="offer-grid" th:if="${not #lists.isEmpty(ofertas)}">
+            <div th:each="oferta : ${ofertas}" class="offer-card">
+                <img th:src="@{${(oferta.imagen != null and oferta.imagen != '') ? oferta.imagen : '/img/placeholder.webp'}}" alt="Imagen del producto" class="offer-img">
+                <div class="offer-body">
+                    <h3 th:text="${oferta.nombre}" style="margin-top:0; color: #2c3e50;"></h3>
+                    <p th:text="${oferta.descripcion}" class="text-muted" style="font-size: 0.9rem; margin-bottom: 15px;"></p>
+ 
+                    <div class="info-row"><strong><i class="fas fa-tag"></i> Precio sugerido por proveedor:</strong> <span th:text="${#numbers.formatCurrency(oferta.precio)}"></span></div>
+                    <div class="info-row"><strong><i class="fas fa-file-invoice-dollar"></i> Costo para Joyería:</strong> <span th:text="${#numbers.formatCurrency(oferta.costoProveedor)}"></span></div>
+                    <div class="info-row"><strong><i class="fas fa-boxes"></i> Cantidad Ofertada:</strong> <span th:text="${oferta.cantidadOfertada}"></span> uds.</div>
+                    <div class="info-row"><strong><i class="fas fa-user-tie"></i> Proveedor:</strong> <span th:text="${oferta.proveedor != null ? oferta.proveedor.nombre : 'N/A'}"></span></div>
+                    <div class="info-row"><strong><i class="fas fa-calendar-alt"></i> Fecha de Oferta:</strong> <span th:text="${#temporals.format(oferta.fechaOferta, 'dd/MM/yyyy HH:mm')}"></span></div>
+                </div>
+                <div class="offer-footer">
+                    <!-- ✅ CORREGIDO: data-* attributes en lugar de pasar el id directamente en onclick -->
+                    <button type="button" class="btn btn-primary w-100"
+                            style="background-color: #27ae60; border:none;"
+                            th:attr="data-id=${oferta.id}, data-cantidad=${oferta.cantidadOfertada}, data-precio=${oferta.precio}"
+                            onclick="abrirModal(this)">
+                        <i class="fas fa-check"></i> Revisar y Aceptar
+                    </button>
+ 
+                    <form th:action="@{/admin/ofertas/rechazar/{id}(id=${oferta.id})}" method="POST" style="flex:1;">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit" class="btn btn-danger w-100" onclick="return confirm('¿Rechazar esta oferta de stock?')">
+                            <i class="fas fa-times"></i> Rechazar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+    <!-- Modal de revisión -->
+    <div class="modal-overlay" id="modalAceptar">
+        <div class="modal-box">
+            <button class="modal-close" onclick="cerrarModal()"><i class="fas fa-times"></i></button>
+            <h4><i class="fas fa-check-double" style="color:#27ae60;"></i> Confirmar Aceptación de Oferta</h4>
+ 
+            <form id="formAceptar" method="POST">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="form-group">
+                    <label for="unidadesAceptadas"><i class="fas fa-box"></i> Unidades a aceptar</label>
+                    <input type="number" id="unidadesAceptadas" name="unidadesAceptadas" min="1" required />
+                    <div class="modal-hint" id="hintUnidades"></div>
+                    <div class="modal-error" id="errorUnidades">Debe ser entre 1 y la cantidad ofertada.</div>
+                </div>
+ 
+                <div class="form-group">
+                    <label for="unidadesEnTienda"><i class="fas fa-store"></i> Unidades a mostrar en tienda</label>
+                    <input type="number" id="unidadesEnTienda" name="unidadesEnTienda" min="1" required />
+                    <div class="modal-hint" id="hintTienda">No puede superar las unidades aceptadas.</div>
+                    <div class="modal-error" id="errorTienda">Debe ser entre 1 y las unidades aceptadas.</div>
+                </div>
+ 
+                <div class="form-group">
+                    <label for="precioVenta"><i class="fas fa-tag"></i> Precio de venta al público</label>
+                    <input type="number" id="precioVenta" name="precioVenta" min="0.01" step="0.01" required />
+                    <div class="modal-hint">Precio final que verá el cliente en la tienda.</div>
+                    <div class="modal-error" id="errorPrecio">El precio debe ser mayor a 0.</div>
+                </div>
+ 
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+                    <button type="button" class="btn-confirmar" onclick="validarYEnviar()">
+                        <i class="fas fa-check"></i> ✓ Confirmar Aceptación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+ 
+    <script>
+        let maxUnidades = 0;
+ 
+        // ✅ CORREGIDO: recibe el botón y lee los data-* attributes (soporta ObjectId de MongoDB)
+        function abrirModal(btn) {
+            const id               = btn.getAttribute('data-id');
+            const cantidadOfertada = parseInt(btn.getAttribute('data-cantidad'));
+            const precioSugerido   = parseFloat(btn.getAttribute('data-precio'));
+ 
+            maxUnidades = cantidadOfertada;
+ 
+            // Configurar acción del form
+            document.getElementById('formAceptar').action = '/admin/ofertas/aceptar/' + id;
+ 
+            // Precargar valores sugeridos
+            document.getElementById('unidadesAceptadas').value = cantidadOfertada;
+            document.getElementById('unidadesAceptadas').max   = cantidadOfertada;
+            document.getElementById('unidadesEnTienda').value  = cantidadOfertada;
+            document.getElementById('unidadesEnTienda').max    = cantidadOfertada;
+            document.getElementById('precioVenta').value       = precioSugerido;
+ 
+            // Hint dinámico
+            document.getElementById('hintUnidades').textContent = 'Máximo disponible: ' + cantidadOfertada + ' uds.';
+ 
+            // Limpiar errores
+            document.getElementById('errorUnidades').style.display = 'none';
+            document.getElementById('errorTienda').style.display   = 'none';
+            document.getElementById('errorPrecio').style.display   = 'none';
+ 
+            // Actualizar max de tienda cuando cambia aceptadas
+            document.getElementById('unidadesAceptadas').oninput = function() {
+                const val = parseInt(this.value) || 0;
+                document.getElementById('unidadesEnTienda').max = val;
+                if (parseInt(document.getElementById('unidadesEnTienda').value) > val) {
+                    document.getElementById('unidadesEnTienda').value = val;
+                }
+            };
+ 
+            document.getElementById('modalAceptar').classList.add('active');
+        }
+ 
+        function cerrarModal() {
+            document.getElementById('modalAceptar').classList.remove('active');
+        }
+ 
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modalAceptar').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModal();
+        });
+ 
+        function validarYEnviar() {
+            const unidadesAceptadas = parseInt(document.getElementById('unidadesAceptadas').value);
+            const unidadesEnTienda  = parseInt(document.getElementById('unidadesEnTienda').value);
+            const precioVenta       = parseFloat(document.getElementById('precioVenta').value);
+ 
+            let valido = true;
+ 
+            // Validar unidades aceptadas
+            if (!unidadesAceptadas || unidadesAceptadas < 1 || unidadesAceptadas > maxUnidades) {
+                document.getElementById('errorUnidades').style.display = 'block';
+                valido = false;
+            } else {
+                document.getElementById('errorUnidades').style.display = 'none';
+            }
+ 
+            // Validar unidades en tienda
+            if (!unidadesEnTienda || unidadesEnTienda < 1 || unidadesEnTienda > unidadesAceptadas) {
+                document.getElementById('errorTienda').style.display = 'block';
+                valido = false;
+            } else {
+                document.getElementById('errorTienda').style.display = 'none';
+            }
+ 
+            // Validar precio
+            if (!precioVenta || precioVenta <= 0) {
+                document.getElementById('errorPrecio').style.display = 'block';
+                valido = false;
+            } else {
+                document.getElementById('errorPrecio').style.display = 'none';
+            }
+ 
+            if (valido) {
+                document.getElementById('formAceptar').submit();
+            }
+        }
+    </script>
+</body>
+</html>
+ 

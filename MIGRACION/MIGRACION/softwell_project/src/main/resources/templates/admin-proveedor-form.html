@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Formulario de Proveedor</title>
+</head>
+<body>
+    <h1 th:text="${proveedor.id == null ? 'Nuevo Proveedor' : 'Editar Proveedor'}"></h1>
+    <form th:action="@{/admin/proveedores/guardar}" th:object="${proveedor}" method="post">
+        <input type="hidden" th:field="*{id}" />
+        <div>
+            <label>Nombre:</label>
+            <input type="text" th:field="*{nombre}" required />
+        </div>
+        <div>
+            <label>Email:</label>
+            <input type="email" th:field="*{email}" required />
+        </div>
+        <div>
+            <label>Teléfono:</label>
+            <input type="text" th:field="*{telefono}" />
+        </div>
+        <div>
+            <label>Dirección:</label>
+            <input type="text" th:field="*{direccion}" />
+        </div>
+        <button type="submit">Guardar Proveedor</button>
+    </form>
+    <a th:href="@{/admin/proveedores}">Cancelar</a>
+</body>
+</html>

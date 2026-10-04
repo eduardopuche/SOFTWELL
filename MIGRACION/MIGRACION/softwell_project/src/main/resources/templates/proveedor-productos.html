@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Catálogo de Suministro - Proveedor</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .table-container { margin-top: 30px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .product-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #eee; }
+        .table th { background-color: #f8f9fa; color: #555; font-weight: 600; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; }
+        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: inline-block; }
+        .status-PENDIENTE { background: #fff3cd; color: #856404; }
+        .status-ACEPTADA { background: #d4edda; color: #155724; }
+        .status-RECHAZADA { background: #f8d7da; color: #721c24; }
+        .price-text { font-family: 'Courier New', Courier, monospace; font-weight: bold; color: #2c3e50; }
+        .btn-action { margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
+            <h1><i class="fas fa-boxes"></i> Catálogo de Suministro</h1>
+            <div class="d-flex gap-2">
+                <a th:href="@{/proveedor/historial-ofertas}" class="btn btn-outline-secondary">
+                    <i class="fas fa-history"></i> Historial de Ofertas
+                </a>
+                <a th:href="@{/proveedor/productos/nuevo}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle"></i> Ofertar Nueva Joya
+                </a>
+            </div>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
+        <div class="table-container">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Imagen</th>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Costo (Venta a Admin)</th>
+                        <th>Precio Sugerido (Público)</th>
+                        <th class="text-center">Stock / Oferta</th>
+                        <th>Estado de Oferta</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="p : ${productos}">
+                        <td>
+                            <img th:src="${p.imagen}" th:alt="${p.nombre}" class="product-img" onerror="this.src='/img/placeholder.webp'">
+                        </td>
+                        <td>
+                            <strong th:text="${p.nombre}"></strong><br/>
+                            <small class="text-info" th:if="${p.estadoAdmin == 'RECHAZADA' and #strings.contains(p.descripcion, '(Nota: Se aceptaron solo')}" 
+                                   style="font-style: italic; font-size: 0.75rem;">
+                                <i class="fas fa-info-circle"></i> Aceptación parcial procesada
+                            </small>
+                        </td>
+                        <td><span class="badge bg-light text-dark" th:text="${p.categoria}"></span></td>
+                        <td class="price-text" th:text="'$' + ${#numbers.formatDecimal(p.costoProveedor, 1, 'POINT', 2, 'COMMA')}"></td>
+                        <td class="price-text text-success" th:text="'$' + ${#numbers.formatDecimal(p.precio, 1, 'POINT', 2, 'COMMA')}"></td>
+                        <td class="text-center">
+                            <div th:if="${p.estadoAdmin == 'PENDIENTE'}">
+                                <span th:text="${p.cantidadOfertada}" class="text-primary fw-bold" title="Cantidad Ofertada"></span>
+                                <small class="d-block text-muted" style="font-size: 0.7rem;">(Pendiente)</small>
+                            </div>
+                            <div th:if="${p.estadoAdmin == 'RECHAZADA'}">
+                                <span th:text="${p.cantidadOfertada}" class="text-danger fw-bold" title="Cantidad no aceptada"></span>
+                                <small class="d-block text-muted" style="font-size: 0.7rem;">(No tomadas)</small>
+                                <small th:if="${p.detallesVentaAdmin != null and !#strings.isEmpty(p.detallesVentaAdmin)}"
+                                       class="d-block text-danger" style="font-size: 0.7rem; font-style: italic;"
+                                       th:text="${p.detallesVentaAdmin}"></small>
+                            </div>
+                            <div th:if="${p.estadoAdmin == 'ACEPTADA'}">
+                                <span th:text="${p.stockProveedor}" th:class="${p.stockProveedor < 5 ? 'text-danger fw-bold' : ''}"></span>
+                            </div>
+                        </td>
+                        <td>
+                            <span th:class="'status-badge status-' + ${p.estadoAdmin}"
+                                  th:text="${p.estadoAdmin != null ? p.estadoAdmin : 'PENDIENTE'}"></span>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center">
+                                <!-- Editar solo si PENDIENTE o RECHAZADA -->
+                                <a th:if="${p.estadoAdmin == 'PENDIENTE' or p.estadoAdmin == 'RECHAZADA'}"
+                                   th:href="@{/proveedor/productos/editar/{id}(id=${p.id})}"
+                                   class="btn btn-sm btn-outline-primary btn-action" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <!-- Sin acciones solo si ACEPTADA -->
+                                <span th:if="${p.estadoAdmin == 'ACEPTADA'}" class="text-muted" style="font-size:0.8rem;">
+                                    Sin acciones
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${productos.isEmpty()}">
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="fas fa-info-circle fa-2x mb-2"></i><br>
+                            No has registrado ninguna oferta de producto todavía.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            <a th:href="@{/proveedor}" class="btn btn-secondary">
+                <i class="fas fa-chevron-left"></i> Volver al Dashboard
+            </a>
+        </div>
+    </div>
+</body>
+</html>

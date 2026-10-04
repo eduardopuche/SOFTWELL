@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Pasarela de Pago Segura - Latin Jewelry</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .checkout-container { max-width: 1000px; margin: 50px auto; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .checkout-section { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .item-summary { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .total-box { margin-top: 20px; font-size: 1.4rem; font-weight: bold; color: #c5a059; }
+        .payment-method { border: 2px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 15px; cursor: pointer; transition: 0.3s; }
+        .payment-method:hover { border-color: #c5a059; }
+        .ssl-badge { color: #27ae60; font-weight: bold; font-size: 0.9rem; text-align: center; margin-top: 10px; }
+    </style>
+</head>
+<body style="background-color: #f4f7f6;">
+
+    <div class="checkout-container">
+        <!-- 1. Validación de Carrito y Resumen -->
+        <div class="checkout-section">
+            <h2 style="margin-bottom: 20px;"><i class="fas fa-shopping-cart"></i> 1. Resumen de Compra</h2>
+            <div class="item-summary" th:each="item : ${items}">
+                <span th:text="${item.product.nombre} + ' x ' + ${item.cantidad}">Producto</span>
+                <strong th:text="'$' + ${#numbers.formatDecimal(item.subtotal, 1, 'POINT', 2, 'COMMA')}"></strong>
+            </div>
+            <div class="item-summary" style="color: #666; font-size: 0.9rem;">
+                <span>IVA (19%)</span>
+                <span th:text="'$' + ${#numbers.formatDecimal(iva, 1, 'POINT', 2, 'COMMA')}"></span>
+            </div>
+            <div class="item-summary" style="color: #666; font-size: 0.9rem;">
+                <span>Costo de Envío</span>
+                <span th:text="'$' + ${#numbers.formatDecimal(envio, 1, 'POINT', 2, 'COMMA')}"></span>
+            </div>
+            <div class="total-box">
+                <span>TOTAL FINAL:</span>
+                <span style="float: right;" th:text="'$' + ${#numbers.formatDecimal(totalFinal, 1, 'POINT', 2, 'COMMA')}"></span>
+            </div>
+            
+            <div style="margin-top: 30px; font-size: 0.9rem;">
+                <strong>Enviar a:</strong>
+                <p th:text="${usuario.direccion}"></p>
+                <p th:text="${usuario.telefono}"></p>
+            </div>
+        </div>
+
+        <!-- 2. Selección del Método de Pago -->
+        <div class="checkout-section">
+            <h2 style="margin-bottom: 20px;"><i class="fas fa-wallet"></i> 2. Método de Pago</h2>
+            
+            <form th:action="@{/checkout/confirmar}" method="POST">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <input type="hidden" name="totalCompra" th:value="${totalFinal}">
+
+                <div class="payment-method">
+                    <input type="radio" name="metodoPago" value="tarjeta" checked> 
+                    <i class="fas fa-credit-card"></i> Tarjeta de Crédito/Débito
+                </div>
+                <div class="payment-method">
+                    <input type="radio" name="metodoPago" value="pse"> 
+                    <i class="fas fa-university"></i> PSE / Transferencia
+                </div>
+                <div class="payment-method">
+                    <input type="radio" name="metodoPago" value="paypal"> 
+                    <i class="fab fa-paypal"></i> PayPal
+                </div>
+
+                <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+                <!-- Simulación para validación de fondos (Punto 5 y 6) -->
+                <div class="form-group" style="background: #fdfae6; padding: 15px; border-radius: 10px;">
+                    <label style="font-size: 0.8rem; font-weight: bold;">[SIMULACIÓN] Ingrese Saldo Bancario:</label>
+                    <input type="number" name="saldoDisponible" placeholder="Ej: 1000.00" required 
+                           style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ccc;">
+                    <small style="color: #888; display: block; margin-top: 5px;">
+                        El sistema validará si hay suficiente dinero en la cuenta.
+                    </small>
+                </div>
+
+                <!-- 3. Seguridad SSL -->
+                <div class="ssl-badge">
+                    <i class="fas fa-lock"></i> Pago Seguro con Cifrado SSL (HTTPS)
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 20px; padding: 18px;">
+                    <i class="fas fa-shield-alt"></i> FINALIZAR Y PAGAR
+                </button>
+                
+                <a th:href="@{/carrito}" class="btn btn-ghost btn-block" style="margin-top: 10px; padding: 15px; text-decoration: none; display: block; text-align: center;">
+                    <i class="fas fa-arrow-left"></i> REGRESAR AL CARRITO
+                </a>
+                
+                <div th:if="${error}" class="alert alert-error" style="margin-top: 15px; background: #fee; color: #c00; padding: 10px; border-radius: 5px;">
+                    <i class="fas fa-times-circle"></i> <span th:text="${error}"></span>
+                </div>
+            </form>
+            
+            <!-- 6. Confirmación y Recibo -->
+            <p style="font-size: 0.8rem; color: #999; text-align: center; margin-top: 15px;">
+                Al pagar, el sistema enviará un recibo electrónico y confirmará el stock en tiempo real.
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>

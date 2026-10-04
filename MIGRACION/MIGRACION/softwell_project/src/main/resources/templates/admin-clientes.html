@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Clientes</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="admin-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h3>Admin LJE</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a th:href="@{/admin/productos}" class="nav-item"><i class="fas fa-box-open"></i> Productos</a>
+            <a th:href="@{/admin/ofertas}" class="nav-item"><i class="fas fa-handshake"></i> Ofertas</a>
+            <a th:href="@{/admin/reportes}" class="nav-item"><i class="fas fa-chart-bar"></i> Reportes</a>
+            <a th:href="@{/admin/pedidos}" class="nav-item"><i class="fas fa-receipt"></i> Pedidos</a>
+            <a th:href="@{/admin/clientes}" class="nav-item active"><i class="fas fa-users"></i> Clientes</a>
+            <a th:href="@{/admin/testimonios}" class="nav-item"><i class="fas fa-comment-dots"></i> Testimonios</a>
+        </nav>
+        <div class="sidebar-footer">
+            <form th:action="@{/logout}" method="post" style="margin:0;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="admin-header">
+            <h1>Gestión de Clientes</h1>
+        </header>
+
+        <section class="content-section active">
+            <div th:if="${success}" class="alert alert-success" style="background-color: #d4edda; color: #155724; border-color: #c3e6cb; margin-bottom: 20px;">
+                <i class="fas fa-check-circle"></i> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-error" style="margin-bottom: 20px;">
+                <i class="fas fa-exclamation-circle"></i> <span th:text="${error}"></span>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Todos los Clientes</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="admin-table" width="100%" cellspacing="0">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Teléfono</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="cliente : ${clientes}">
+                                <td th:text="${cliente.id}">1</td>
+                                <td th:text="${cliente.nombre}">Nombre Cliente</td>
+                                <td th:text="${cliente.email}"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3457585d515a4051745159555d581a575b59">[email&#160;protected]</a></td>
+                                <td th:text="${cliente.telefono ?: 'N/A'}">3001234567</td>
+                                <td>
+                                    <span th:if="${cliente.estaActivo()}" class="badge badge-success">Activo</span>
+                                    <span th:unless="${cliente.estaActivo()}" class="badge badge-danger">Inactivo</span>
+                                </td>
+                                <td style="display: flex; gap: 8px;">
+                                    <a th:href="@{/admin/clientes/editar/{id}(id=${cliente.id})}" class="btn btn-info btn-sm" title="Editar"><i class="fas fa-edit"></i></a>
+                                    <form th:if="${cliente.estaActivo()}" th:action="@{/admin/clientes/desactivar/{id}(id=${cliente.id})}" method="post" style="display:inline;">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" /><button type="submit" class="btn btn-warning btn-sm" title="Desactivar"><i class="fas fa-user-slash"></i></button></form>
+                                    <form th:unless="${cliente.estaActivo()}" th:action="@{/admin/clientes/activar/{id}(id=${cliente.id})}" method="post" style="display:inline;">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" /><button type="submit" class="btn btn-success btn-sm" title="Activar"><i class="fas fa-user-check"></i></button></form>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>

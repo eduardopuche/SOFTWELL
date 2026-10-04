@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Latin Jewelry Elegance</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * { box-sizing: border-box; }
+        body { min-height: 100vh; height: auto; overflow-x: hidden; background-color: #fff; margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; }
+        .login-container { display: flex; flex-direction: column; align-items: center; padding: 40px 20px; width: 100%; min-height: 100vh; overflow-y: auto; }
+        .login-box { 
+            width: 100%; 
+            max-width: 1000px; /* Set a reasonable max-width for the content box */
+            border-radius: 20px; 
+            padding: 50px; /* Consistent padding */
+            margin-bottom: 30px; /* Space between login-box sections */
+            background: #fff; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.06); 
+            border: 1px solid #eee; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        /* Estilos para el Menú de Cuenta de Proveedor */
+        .account-nav {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap;
+        }
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 48px; /* Agregados 2mm adicionales (aprox 8px) de cada lado */
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+            font-size: 0.95rem;
+            background: #f8f9fa;
+            color: #444;
+            border: 1px solid #ddd;
+        }
+        .nav-btn:hover { background: #eee; }
+        .nav-btn-active { background: #fdfae6; color: #856404; border-color: #ffeeba; }
+        .nav-btn-active:hover { background: #fff3cd; }
+        
+        .login-form { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; /* Keep two columns */
+            gap: 20px 40px; 
+            width: 100%; 
+            max-width: 100%; /* Allow form to take full width of its parent (login-box) */
+            margin: 0 auto; 
+        }
+        
+        .form-group { margin-bottom: 5px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 1rem; color: #444; }
+        .login-form input, .login-form select, .login-form textarea { 
+            width: 100%; 
+            padding: 12px 18px !important; 
+            font-size: 1.05rem !important; 
+            border-radius: 12px !important; 
+            border: 1px solid #ddd; 
+            background-color: #fafafa;
+        }
+        
+        .login-form input:focus {
+            border-color: var(--accent);
+            outline: none;
+            background-color: #fff;
+        }
+
+        .full-width { grid-column: span 2; width: 100%; }
+        .btn-block { padding: 16px !important; font-size: 1.2rem; font-weight: 700; border-radius: 12px !important; text-transform: uppercase; letter-spacing: 1px; }
+
+        #map-perfil { height: 450px; width: 100%; border-radius: 20px; margin: 25px 0; border: 2px solid #eee; display: none; box-shadow: 0 8px 30px rgba(0,0,0,0.08); background: #f9f9f9; }
+        .table { width: 100%; max-width: 1000px; border-collapse: collapse; margin-top: 1rem; }
+        .table th, .table td { border-bottom: 1px solid #eee; padding: 18px 15px; text-align: left; }
+        .table th { background-color: #fafafa; font-weight: 700; color: #555; }
+        
+        .login-header { text-align: center; margin-bottom: 40px; width: 100%; max-width: 800px; }
+        .login-header h1 { font-size: 3.5rem; margin-bottom: 10px; color: var(--accent); font-family: 'Playfair Display', serif; font-weight: 700; letter-spacing: 1px; }
+        .login-header p { color: #666; font-size: 1.2rem; }
+        
+        .info-badge { background: #f0f2f5; padding: 4px 12px; border-radius: 6px; font-size: 0.9rem; color: #666; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <div class="login-box">
+        <!-- Menú de navegación exclusivo para Proveedores -->
+        <div sec:authorize="hasRole('PROVEEDOR')" class="account-nav">
+            <a th:href="@{/proveedor}" class="nav-btn">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <a th:href="@{/proveedor/productos}" class="nav-btn">
+                <i class="fas fa-boxes"></i> Mis Productos
+            </a>
+            <a th:href="@{/proveedor/productos/nuevo}" class="nav-btn">
+                <i class="fas fa-plus-circle"></i> Nueva Oferta
+            </a>
+            <a th:href="@{/proveedor/perfil}" class="nav-btn nav-btn-active">
+                <i class="fas fa-user-cog"></i> Mi Perfil
+            </a>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img id="foto-perfil-preview" th:src="@{${(usuario.fotoPerfil != null and usuario.fotoPerfil != '') ? usuario.fotoPerfil : '/img/default-avatar.png'}}"
+                 alt="Foto de perfil"
+                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+        </div>
+
+        <div class="login-header">
+            <h1>Mi Perfil</h1>
+            <p>Actualiza tu información personal</p>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success">
+            <i class="fas fa-check-circle"></i>
+            <span th:text="${success}"></span>
+        </div>
+        <div th:if="${error}" class="alert alert-error">
+            <i class="fas fa-exclamation-circle"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <!-- Acción dinámica: Si es proveedor, usa la ruta de actualización de proveedor para asegurar sincronización -->
+        <form method="POST" 
+              th:action="${#authorization.expression('hasRole(''PROVEEDOR'')') ? '/proveedor/perfil/actualizar' : '/perfil'}" 
+              th:object="${usuario}" 
+              enctype="multipart/form-data" class="login-form">
+            <!-- CSRF obligatorio -->
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+            <div class="form-group">
+                <label for="nombre">Nombre Completo</label>
+                <input type="text" id="nombre" th:field="*{nombre}" placeholder="Tu nombre completo" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" th:field="*{email}" placeholder="tu@email.com" required>
+            </div>
+            <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input type="tel" id="telefono" th:field="*{telefono}" placeholder="Tu número de teléfono">
+            </div>
+            <div class="form-group">
+                <label for="direccion">Dirección</label>
+                <input type="text" id="direccion" th:field="*{direccion}" placeholder="Tu dirección de envío">
+            </div>
+            <div class="form-group">
+                <label>Tipo de Cuenta</label>
+                <input type="text" th:value="${usuario.rol != null ? usuario.rol.toUpperCase() : 'CLIENTE'}" readonly style="background-color: #f0f0f0; cursor: not-allowed;">
+            </div>
+            <div class="form-group">
+                <label>Miembro desde</label>
+                <input type="text" th:value="${usuario.fechaRegistro}" readonly style="background-color: #f0f0f0; cursor: not-allowed;">
+            </div>
+            <div class="full-width" style="margin-top: 10px;">
+                <label for="fotoArchivo">Foto de Perfil</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="file" id="fotoArchivo" name="fotoArchivo" accept="image/*" style="flex: 1;">
+                </div>
+            </div>
+            
+            <div class="full-width" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button type="button" class="btn btn-ghost" id="btn-mapa-perfil" style="flex: 1; border: 1px dashed var(--accent);">
+                    <i class="fas fa-map-marker-alt"></i> Abrir Mapa
+                </button>
+                <button type="button" class="btn btn-ghost" id="btn-mi-ubicacion" style="flex: 1; border: 1px dashed #28a745; color: #28a745;">
+                    <i class="fas fa-crosshairs"></i> Casa Exacta (GPS)
+                </button>
+            </div>
+            <div class="full-width">
+                <label id="label-mapa-perfil" style="font-weight: 600; display: none;">Marcar ubicación</label>
+                <div id="map-perfil"></div>
+                <input type="hidden" id="latitud" th:field="*{latitud}">
+                <input type="hidden" id="longitud" th:field="*{longitud}">
+            </div>
+
+            <div class="full-width">
+                <button type="submit" class="btn btn-primary btn-block">Guardar Cambios</button>
+            </div>
+        </form>
+
+        <!-- Cerrar sesión como POST (obligatorio en Spring Security 6) -->
+        <div style="margin-top: 15px; text-align: center;">
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="btn btn-ghost">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </form>
+        </div>
+
+        <div class="login-footer">
+            <a th:href="@{/}">← Volver a Inicio</a>
+        </div>
+    </div>
+
+    <!-- Historial de pedidos -->
+    <div class="login-box" sec:authorize="hasRole('CLIENTE')">
+        <div class="login-header">
+            <h1>Mi Historial de Pedidos</h1>
+        </div>
+
+        <div th:if="${pedidos.isEmpty()}" class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Aún no has realizado ningún pedido.</span>
+        </div>
+
+        <table class="table" th:if="${!pedidos.isEmpty()}">
+            <thead>
+                <tr>
+                    <th>ID Pedido</th>
+                    <th>Artículos</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="pedido : ${pedidos}">
+                    <td th:text="${pedido.id}">#123</td>
+                    <td>
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap; max-width: 150px;">
+                            <img th:each="imgUrl : ${#strings.arraySplit(pedido.imagenesItems, ',')}" 
+                                 th:src="${imgUrl}" 
+                                 style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;"
+                                 onerror="this.src='/img/placeholder.webp'">
+                        </div>
+                    </td>
+                    <td th:text="${#temporals.format(pedido.fechaCreacion, 'dd-MM-yyyy HH:mm')}">01-01-2025</td>
+                    <td th:text="'$' + ${#numbers.formatDecimal(pedido.total, 1, 'POINT', 2, 'COMMA')}">$100.00</td>
+                    <td><a th:href="@{/perfil/pedidos/{id}(id=${pedido.id})}" class="btn-link">Ver Detalles</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Testimonio -->
+    <div class="login-box" sec:authorize="hasRole('CLIENTE')">
+        <div class="login-header">
+            <h1>Deja tu Testimonio</h1>
+            <p>¡Tu opinión es muy importante para nosotros!</p>
+        </div>
+
+        <form method="POST" th:action="@{/perfil/nuevo-testimonio}" class="login-form">
+            <!-- CSRF obligatorio -->
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <div class="form-group full-width">
+                <label for="testimonio_texto">Tu experiencia con nosotros:</label>
+                <textarea id="testimonio_texto" name="texto" class="form-control" rows="4" placeholder="Escribe aquí tu testimonio..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Enviar Testimonio</button>
+        </form>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script th:inline="javascript">
+    let map, marker;
+    
+    // Función para obtener la dirección desde coordenadas (Reverse Geocoding)
+    async function obtenerDireccion(lat, lng) {
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+            const data = await response.json();
+            if (data && data.address) {
+                const a = data.address;
+                const partes = [];
+
+                // 1. Ciudad / Municipio
+                const ciudad = a.city || a.town || a.village || a.municipality;
+                if (ciudad) partes.push(ciudad);
+
+                // 2. Barrio / Sector
+                const barrio = a.neighbourhood || a.suburb || a.residential;
+                if (barrio) partes.push(barrio);
+
+                // 3. Calle y número (Mejorado para capturar numeración de casa exacta)
+                const via = a.road || a.pedestrian || a.path || a.cycleway || a.address29;
+                const numero = a.house_number || a.house_name;
+                
+                if (via) {
+                    // Formato: Nombre de Calle #Número
+                    partes.push(via + (numero ? " #" + numero : ""));
+                } else if (numero) {
+                    // Si no detecta la vía pero sí el número de predio
+                    partes.push("Propiedad #" + numero);
+                }
+
+                // 4. Departamento y País
+                if (a.state) partes.push(a.state);
+                if (a.country) partes.push(a.country);
+
+                // Unimos todo con comas, excluyendo el código postal
+                document.getElementById('direccion').value = partes.join(', ');
+            } else if (data && data.display_name) {
+                // Fallback en caso de que la estructura detallada no esté disponible
+                document.getElementById('direccion').value = data.display_name;
+            }
+        } catch (error) {
+            console.error("Error al obtener la dirección:", error);
+        }
+    }
+
+    const bounds = [
+      [10.20, -75.75], 
+      [10.60, -75.25]
+    ];
+
+    function initLeafletProfile() {
+        const latGuardada = /*[[${usuario.latitud}]]*/ 10.391;
+        const lngGuardada = /*[[${usuario.longitud}]]*/ -75.479;
+        const userPos = [latGuardada || 10.391, lngGuardada || -75.479];
+
+        map = L.map('map-perfil', {
+            maxBounds: bounds,
+            maxBoundsViscosity: 1.0
+        }).setView(userPos, 18); // Zoom inicial más cercano para ver casas con claridad
+
+        // Capa de Google Maps para visualizar nombres de barrios claramente
+        L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains:['mt0','mt1','mt2','mt3'],
+            attribution: '&copy; Google Maps'
+        }).addTo(map);
+
+        if (latGuardada && lngGuardada) {
+            // Al cargar, si ya hay posición, inicializamos el marcador sin disparar la búsqueda de dirección otra vez
+            marker = L.marker(userPos, { draggable: true }).addTo(map);
+        }
+
+        map.on('click', function(e) {
+            actualizarMarcador(e.latlng);
+            map.setView(e.latlng, 19); // Máximo acercamiento al marcar para verificar exactitud
+        });
+    }
+
+    function actualizarMarcador(latlng) {
+        if (marker) map.removeLayer(marker);
+        
+        marker = L.marker(latlng, { draggable: true }).addTo(map);
+        
+        // Actualizamos los campos ocultos de coordenadas
+        document.getElementById('latitud').value = latlng.lat;
+        document.getElementById('longitud').value = latlng.lng;
+        
+        // Llamamos a la API para llenar el campo "direccion"
+        obtenerDireccion(latlng.lat, latlng.lng);
+
+        // Escuchamos cuando el usuario deja de arrastrar el marcador
+        marker.on('dragend', function(event) {
+            const position = event.target.getLatLng();
+            document.getElementById('latitud').value = position.lat;
+            document.getElementById('longitud').value = position.lng;
+            obtenerDireccion(position.lat, position.lng);
+        });
+    }
+
+    document.getElementById('btn-mapa-perfil').addEventListener('click', function() {
+        this.style.display = 'none';
+        document.getElementById('map-perfil').style.display = 'block';
+        document.getElementById('label-mapa-perfil').style.display = 'block';
+        
+        if (!map) {
+            initLeafletProfile();
+        } else {
+            map.invalidateSize();
+        }
+    });
+
+    // Lógica para obtener la ubicación exacta vía GPS
+    document.getElementById('btn-mi-ubicacion').addEventListener('click', function() {
+        if (!navigator.geolocation) {
+            alert("Tu navegador no soporta geolocalización.");
+            return;
+        }
+        
+        // Si el mapa no está abierto, lo abrimos automáticamente
+        if (document.getElementById('map-perfil').style.display !== 'block') {
+            document.getElementById('btn-mapa-perfil').click();
+        }
+
+        navigator.geolocation.getCurrentPosition(async function(position) {
+            const latlng = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            
+            if (map) {
+                map.setView(latlng, 19);
+            }
+            actualizarMarcador(latlng);
+        }, function() {
+            alert("No pudimos obtener tu ubicación exacta. Por favor, asegúrate de activar el GPS y dar permisos de ubicación.");
+        });
+    });
+
+    // Lógica para la vista previa dinámica de la foto de perfil
+    document.getElementById('fotoArchivo').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('foto-perfil-preview');
+                preview.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+MONGODB_URI=mongodb+srv://Alex2070:3126451123@cluster0.jb3hywm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+MONGODB_DATABASE=softwell

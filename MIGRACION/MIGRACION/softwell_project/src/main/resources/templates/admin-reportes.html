@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - Admin</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<div class="admin-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h3>Admin LJE</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+            <a th:href="@{/admin/productos}" class="nav-item"><i class="fas fa-box-open"></i> Productos</a>
+            <a th:href="@{/admin/ofertas}" class="nav-item"><i class="fas fa-handshake"></i> Ofertas</a>
+            <a th:href="@{/admin/pedidos}" class="nav-item"><i class="fas fa-receipt"></i> Pedidos</a>
+            <a th:href="@{/admin/clientes}" class="nav-item"><i class="fas fa-users"></i> Clientes</a>
+            <a th:href="@{/admin/testimonios}" class="nav-item"><i class="fas fa-comment-dots"></i> Testimonios</a>
+            <a th:href="@{/admin/reportes}" class="nav-item active"><i class="fas fa-chart-bar"></i> Reportes</a>
+        </nav>
+        <div class="sidebar-footer">
+            <form th:action="@{/logout}" method="post" style="margin:0;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="admin-header">
+            <h1><i class="fas fa-chart-bar"></i> Reportes</h1>
+        </header>
+
+        <section class="content-section active">
+
+            <!-- RESUMEN GENERAL -->
+            <div class="dashboard-stats" style="margin-bottom: 40px;">
+                <div class="stat-card" style="flex-grow:1;">
+                    <div class="stat-icon" style="background:#e8f5e9; padding:20px;">
+                        <i class="fas fa-dollar-sign fa-2x" style="color:#2e7d32;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-title">Ingresos Totales</span>
+                        <span class="stat-value" style="font-size:1.8rem; color:#2e7d32;"
+                              th:text="'$' + ${#numbers.formatDecimal(ingresosTotales, 1, 'POINT', 0, 'COMMA')}">$0</span>
+                        <span style="font-size:0.8rem; color:#666;">Solo pedidos PAGADOS</span>
+                    </div>
+                </div>
+                <div class="stat-card" style="flex-grow:1;">
+                    <div class="stat-icon" style="background:#e3f2fd; padding:20px;">
+                        <i class="fas fa-receipt fa-2x" style="color:#1565c0;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-title">Pedidos Pagados</span>
+                        <span class="stat-value" style="font-size:2rem;" th:text="${pedidosPagados}">0</span>
+                    </div>
+                </div>
+                <div class="stat-card" style="flex-grow:1;">
+                    <div class="stat-icon" style="background:#fff3e0; padding:20px;">
+                        <i class="fas fa-clock fa-2x" style="color:#e65100;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-title">Pedidos Pendientes</span>
+                        <span class="stat-value" style="font-size:2rem; color:#e65100;" th:text="${pedidosPendientes}">0</span>
+                    </div>
+                </div>
+                <div class="stat-card" style="flex-grow:1;">
+                    <div class="stat-icon" style="background:#ffebee; padding:20px;">
+                        <i class="fas fa-times-circle fa-2x" style="color:#b71c1c;"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-title">Pedidos Rechazados</span>
+                        <span class="stat-value" style="font-size:2rem; color:#b71c1c;" th:text="${pedidosRechazados}">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INGRESOS POR MES -->
+            <div style="background:white; border-radius:12px; padding:28px; margin-bottom:30px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                <h2 style="font-size:1.2rem; margin-bottom:20px;">
+                    <i class="fas fa-calendar-alt" style="color:#1565c0;"></i> Ingresos por Mes
+                </h2>
+                <div th:if="${ingresosPorMes.isEmpty()}" style="color:#999; text-align:center; padding:20px;">
+                    No hay pedidos pagados registrados aún.
+                </div>
+                <table th:unless="${ingresosPorMes.isEmpty()}" class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Mes</th>
+                            <th>Pedidos Pagados</th>
+                            <th>Ingresos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="entry : ${ingresosPorMes}">
+                            <td th:text="${entry.mes}">Enero 2026</td>
+                            <td th:text="${entry.cantidad}">0</td>
+                            <td th:text="'$' + ${#numbers.formatDecimal(entry.total, 1, 'POINT', 0, 'COMMA')}">$0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ALERTAS DE STOCK -->
+            <div style="background:white; border-radius:12px; padding:28px; margin-bottom:30px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                <h2 style="font-size:1.2rem; margin-bottom:20px;">
+                    <i class="fas fa-exclamation-triangle" style="color:#f9a825;"></i> Alertas de Inventario
+                </h2>
+
+                <div th:if="${productosAgotados.isEmpty() and productosBajoStock.isEmpty()}"
+                     style="color:#2e7d32; text-align:center; padding:20px;">
+                    <i class="fas fa-check-circle"></i> Todo el inventario está en buen estado.
+                </div>
+
+                <div th:unless="${productosAgotados.isEmpty()}" style="margin-bottom:20px;">
+                    <h3 style="font-size:1rem; color:#c62828; margin-bottom:10px;">
+                        <i class="fas fa-times-circle"></i> Productos Agotados en Tienda
+                    </h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Nombre</th><th>Categoría</th><th>En Bodega</th><th>Acción</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="p : ${productosAgotados}">
+                                <td th:text="${p.nombre}"></td>
+                                <td th:text="${p.categoria}"></td>
+                                <td th:text="${p.stockProveedor - p.stock}"
+                                    th:style="${p.stockProveedor - p.stock > 0 ? 'color:#2e7d32; font-weight:bold;' : 'color:#999;'}"></td>
+                                <td>
+                                    <a th:href="@{/admin/productos}" class="btn btn-ghost" style="padding:4px 10px; font-size:12px;">
+                                        <i class="fas fa-arrow-up"></i> Subir de bodega
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div th:unless="${productosBajoStock.isEmpty()}">
+                    <h3 style="font-size:1rem; color:#f9a825; margin-bottom:10px;">
+                        <i class="fas fa-exclamation-triangle"></i> Productos con Stock Bajo (menos de 3 uds.)
+                    </h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Nombre</th><th>Categoría</th><th>En Tienda</th><th>En Bodega</th><th>Acción</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="p : ${productosBajoStock}">
+                                <td th:text="${p.nombre}"></td>
+                                <td th:text="${p.categoria}"></td>
+                                <td th:text="${p.stock}" style="color:#f9a825; font-weight:bold;"></td>
+                                <td th:text="${p.stockProveedor - p.stock}"></td>
+                                <td>
+                                    <a th:href="@{/admin/productos}" class="btn btn-ghost" style="padding:4px 10px; font-size:12px;">
+                                        <i class="fas fa-arrow-up"></i> Subir de bodega
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ÚLTIMOS PEDIDOS -->
+            <div style="background:white; border-radius:12px; padding:28px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                <h2 style="font-size:1.2rem; margin-bottom:20px;">
+                    <i class="fas fa-receipt" style="color:#7b1fa2;"></i> Últimos 10 Pedidos
+                </h2>
+                <div th:if="${ultimosPedidos.isEmpty()}" style="color:#999; text-align:center; padding:20px;">
+                    No hay pedidos registrados aún.
+                </div>
+                <table th:unless="${ultimosPedidos.isEmpty()}" class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Cliente</th>
+                            <th>Fecha</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p : ${ultimosPedidos}">
+                            <td th:text="${p.id}"></td>
+                            <td th:text="${p.nombreCliente}"></td>
+                            <td th:text="${#temporals.format(p.fechaCreacion, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td th:text="'$' + ${#numbers.formatDecimal(p.total, 1, 'POINT', 0, 'COMMA')}"></td>
+                            <td>
+                                <span th:text="${p.estado}"
+                                      th:style="${p.estado == 'PAGADO'} ? 'color:#2e7d32; font-weight:bold;' :
+                                                 (${p.estado == 'PENDIENTE'} ? 'color:#e65100; font-weight:bold;' :
+                                                 'color:#b71c1c; font-weight:bold;')">
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+    </main>
+</div>
+
+</body>
+</html>
